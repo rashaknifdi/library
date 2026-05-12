@@ -5,7 +5,10 @@ import com.rasha.library.dto.v1.AuthorResponse;
 import com.rasha.library.dto.v1.BookResponse;
 import com.rasha.library.model.Author;
 import com.rasha.library.service.AuthorService;
+import com.rasha.library.service.BookService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,9 +18,11 @@ import java.util.List;
 public class AuthorController {
 
     private final AuthorService service;
+    private final BookService bookService;
 
-    public AuthorController(AuthorService service) {
+    public AuthorController(AuthorService service, BookService bookService) {
         this.service = service;
+        this.bookService = bookService;
     }
 
     @PostMapping
@@ -31,21 +36,15 @@ public class AuthorController {
         Author a = service.find(id);
         return new AuthorResponse(a.getId(), a.getName());
     }
+
+    @GetMapping
+    public Page<AuthorResponse> getAll(Pageable pageable) {
+        return service.findAll(pageable).map(a -> new AuthorResponse(a.getId(), a.getName()));
+    }
+
     @GetMapping("/{id}/books")
-    public List<BookResponse> getBooksByAuthor(@PathVariable Long id) {
-
-        Author author = service.find(id);
-
-        return author.getBooks().stream()
-                .map(book -> new BookResponse(
-                        book.getId(),
-                        book.getTitle(),
-                        book.getIsbn(),
-                        book.getPublishedYear(),
-                        author.getId(),
-                        author.getName()
-                ))
-                .toList();
+    public Page<BookResponse> getBooksByAuthor(@PathVariable Long id, Pageable pageable) {
+        return bookService.getByAuthor(id, pageable);
     }
 
 }

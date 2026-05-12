@@ -4,6 +4,7 @@ import com.rasha.library.dto.v2.BookListResponse;
 import com.rasha.library.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,7 +25,7 @@ public class BookControllerV2 {
             description = "Returns books wrapped in a data object with version information."
     )
     @GetMapping
-    public BookListResponse getAll() {
-        return service.getAllV2();
+    public BookListResponse getAll(Pageable pageable) {
+        return service.getAllV2(pageable);
     }
 }

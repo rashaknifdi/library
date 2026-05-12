@@ -14,7 +14,13 @@ import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+                "spring.cloud.vault.enabled=false",
+                "app.rate-limiting.enabled=false"
+        }
+)
 public class LoanConcurrencyTest {
 
     @Autowired
@@ -24,14 +30,14 @@ public class LoanConcurrencyTest {
 
     @BeforeEach
     void setup() {
-        // Create author
+        rest = rest.withBasicAuth("admin", "password");
+
         AuthorResponse author = rest.postForEntity(
                 "/api/v1/authors",
                 new AuthorRequest("Test"),
                 AuthorResponse.class
         ).getBody();
 
-        // Create book
         BookResponse book = rest.postForEntity(
                 "/api/v1/books",
                 new BookRequest("Book", "111", 2000, author.getId()),

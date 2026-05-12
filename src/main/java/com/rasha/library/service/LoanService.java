@@ -9,6 +9,8 @@ import com.rasha.library.repository.BookRepository;
 import com.rasha.library.repository.LoanRepository;
 import jakarta.persistence.OptimisticLockException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +46,7 @@ public class LoanService {
                 .orElseThrow(() -> new LoanNotFoundException(id));
     }
 
-    public List<Loan> getAllLoans() {
-        return loanRepo.findAll();
+    public Page<Loan> getAllLoans(Pageable pageable) {
+        return loanRepo.findAll(pageable);
     }
 }

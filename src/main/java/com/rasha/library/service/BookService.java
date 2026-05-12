@@ -9,6 +9,10 @@ import com.rasha.library.model.Author;
 import com.rasha.library.model.Book;
 import com.rasha.library.repository.AuthorRepository;
 import com.rasha.library.repository.BookRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -47,6 +51,7 @@ public class BookService {
         );
     }
 
+    @Cacheable(value = "books", key = "#id")
     public BookResponse getById(Long id) {
         Book book = bookRepo.findById(id)
                 .orElseThrow(() -> new BookNotFoundException(id));
@@ -61,17 +66,29 @@ public class BookService {
         );
     }
 
-    public List<BookResponse> getAll() {
-        return bookRepo.findAll().stream()
-                .map(book -> new BookResponse(
-                        book.getId(),
-                        book.getTitle(),
-                        book.getIsbn(),
-                        book.getPublishedYear(),
-                        book.getAuthor().getId(),
-                        book.getAuthor().getName()
-                ))
-                .toList();
+    public Page<BookResponse> getAll(Pageable pageable) {
+        return bookRepo.findAll(pageable).map(book -> new BookResponse(
+                book.getId(),
+                book.getTitle(),
+                book.getIsbn(),
+                book.getPublishedYear(),
+                book.getAuthor().getId(),
+                book.getAuthor().getName()
+        ));
+    }
+
+    public Page<BookResponse> getByAuthor(Long authorId, Pageable pageable) {
+        if (!authorRepo.existsById(authorId)) {
+            throw new AuthorNotFoundException(authorId);
+        }
+        return bookRepo.findByAuthorId(authorId, pageable).map(book -> new BookResponse(
+                book.getId(),
+                book.getTitle(),
+                book.getIsbn(),
+                book.getPublishedYear(),
+                book.getAuthor().getId(),
+                book.getAuthor().getName()
+        ));
     }
 
     public BookResponse update(Long id, BookRequest request) {
@@ -98,7 +115,7 @@ public class BookService {
                 saved.getAuthor().getName()
         );
     }
-
+    @CacheEvict(value = "books", key = "#id")
     public void delete(Long id) {
         if (!bookRepo.existsById(id)) {
             throw new BookNotFoundException(id);
@@ -106,8 +123,8 @@ public class BookService {
         bookRepo.deleteById(id);
     }
 
-    public BookListResponse getAllV2() {
-        List<com.rasha.library.dto.v2.BookResponse> data = bookRepo.findAll().stream()
+    public BookListResponse getAllV2(Pageable pageable) {
+        List<com.rasha.library.dto.v2.BookResponse> data = bookRepo.findAll(pageable).stream()
                 .map(b -> new com.rasha.library.dto.v2.BookResponse(
                         b.getTitle(),
                         b.getAuthor().getName(),

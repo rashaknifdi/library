@@ -17,6 +17,9 @@ public class Book {
     @OneToOne(mappedBy = "book", cascade = CascadeType.ALL)
     private Loan loan;
 
+    @Version
+    private Long version;
+
     public Book() {}
 
     public Book(String title, Author author, String isbn, int publishedYear) {
@@ -74,5 +77,13 @@ public class Book {
 
     public void setLoan(Loan loan) {
         this.loan = loan;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

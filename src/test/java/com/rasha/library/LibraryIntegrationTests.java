@@ -13,7 +13,13 @@ import org.springframework.http.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+                "spring.cloud.vault.enabled=false",
+                "app.rate-limiting.enabled=false"
+        }
+)
 public class LibraryIntegrationTests {
 
     @Autowired
@@ -30,6 +36,8 @@ public class LibraryIntegrationTests {
 
     @BeforeEach
     void setup() {
+        rest = rest.withBasicAuth("admin", "password");
+
         loanRepo.deleteAll();
         bookRepo.deleteAll();
         authorRepo.deleteAll();
@@ -37,51 +45,66 @@ public class LibraryIntegrationTests {
 
     @Test
     void createAuthorAndBook() {
-        // Skapa author
         AuthorRequest authorReq = new AuthorRequest("Frank Herbert");
-        ResponseEntity<AuthorResponse> authorRes = rest.postForEntity("/api/v1/authors", authorReq, AuthorResponse.class);
+        ResponseEntity<AuthorResponse> authorRes =
+                rest.postForEntity("/api/v1/authors", authorReq, AuthorResponse.class);
+
         assertEquals(HttpStatus.OK, authorRes.getStatusCode());
         Long authorId = authorRes.getBody().getId();
 
-        // Skapa bok
         BookRequest bookReq = new BookRequest("Dune", "123", 1965, authorId);
-        ResponseEntity<BookResponse> bookRes = rest.postForEntity("/api/v1/books", bookReq, BookResponse.class);
+        ResponseEntity<BookResponse> bookRes =
+                rest.postForEntity("/api/v1/books", bookReq, BookResponse.class);
+
         assertEquals(HttpStatus.CREATED, bookRes.getStatusCode());
     }
 
     @Test
     void createLoan() {
-        // Setup author & bok
-        AuthorResponse author = rest.postForEntity("/api/v1/authors", new AuthorRequest("A"), AuthorResponse.class).getBody();
-        BookResponse book = rest.postForEntity("/api/v1/books", new BookRequest("B", "1", 2000, author.id), BookResponse.class).getBody();
+        AuthorResponse author = rest.postForEntity(
+                "/api/v1/authors", new AuthorRequest("A"), AuthorResponse.class
+        ).getBody();
 
-        // Skapa lån
+        BookResponse book = rest.postForEntity(
+                "/api/v1/books", new BookRequest("B", "1", 2000, author.id), BookResponse.class
+        ).getBody();
+
         LoanRequest loanReq = new LoanRequest();
         loanReq.setBookId(book.getId());
         loanReq.setBorrower("Rasha");
 
-        ResponseEntity<LoanResponse> res = rest.postForEntity("/api/v1/loans", loanReq, LoanResponse.class);
+        ResponseEntity<LoanResponse> res =
+                rest.postForEntity("/api/v1/loans", loanReq, LoanResponse.class);
+
         assertEquals(HttpStatus.OK, res.getStatusCode());
     }
 
     @Test
     void borrowBorrowedBook() {
-        AuthorResponse author = rest.postForEntity("/api/v1/authors", new AuthorRequest("A"), AuthorResponse.class).getBody();
-        BookResponse book = rest.postForEntity("/api/v1/books", new BookRequest("B", "1", 2000, author.id), BookResponse.class).getBody();
+        AuthorResponse author = rest.postForEntity(
+                "/api/v1/authors", new AuthorRequest("A"), AuthorResponse.class
+        ).getBody();
+
+        BookResponse book = rest.postForEntity(
+                "/api/v1/books", new BookRequest("B", "1", 2000, author.id), BookResponse.class
+        ).getBody();
 
         LoanRequest req = new LoanRequest();
         req.setBookId(book.getId());
         req.setBorrower("X");
 
         rest.postForEntity("/api/v1/loans", req, String.class);
-        ResponseEntity<String> res = rest.postForEntity("/api/v1/loans", req, String.class);
+        ResponseEntity<String> res =
+                rest.postForEntity("/api/v1/loans", req, String.class);
 
         assertEquals(HttpStatus.BAD_REQUEST, res.getStatusCode());
     }
 
     @Test
     void getMissingBook() {
-        ResponseEntity<String> res = rest.getForEntity("/api/v1/books/999", String.class);
+        ResponseEntity<String> res =
+                rest.getForEntity("/api/v1/books/999", String.class);
+
         assertEquals(HttpStatus.NOT_FOUND, res.getStatusCode());
     }
 }

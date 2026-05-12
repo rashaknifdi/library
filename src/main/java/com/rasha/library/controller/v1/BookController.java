@@ -4,6 +4,8 @@ import com.rasha.library.dto.v1.BookRequest;
 import com.rasha.library.dto.v1.BookResponse;
 import com.rasha.library.service.BookService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,8 +33,8 @@ public class BookController {
     }
 
     @GetMapping
-    public List<BookResponse> getAll() {
-        return service.getAll();
+    public Page<BookResponse> getAll(Pageable pageable) {
+        return service.getAll(pageable);
     }
 
     @PutMapping("/{id}")

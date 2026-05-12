@@ -5,6 +5,8 @@ import com.rasha.library.dto.v1.LoanResponse;
 import com.rasha.library.model.Loan;
 import com.rasha.library.service.LoanService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,14 +41,12 @@ public class LoanController {
         );
     }
     @GetMapping
-    public List<LoanResponse> getAll() {
-        return service.getAllLoans().stream()
-                .map(loan -> new LoanResponse(
-                        loan.getId(),
-                        loan.getBook().getId(),
-                        loan.getBorrower()
-                ))
-                .toList();
+    public Page<LoanResponse> getAll(Pageable pageable) {
+        return service.getAllLoans(pageable).map(loan -> new LoanResponse(
+                loan.getId(),
+                loan.getBook().getId(),
+                loan.getBorrower()
+        ));
     }
 
 }
